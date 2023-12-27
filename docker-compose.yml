@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+
+  web_app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: flask run --host 0.0.0.0 --port 8080
+    expose:
+      - 8080
+    env_file:
+      - ./.env
