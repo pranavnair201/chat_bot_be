@@ -17,7 +17,7 @@ class RetrievalView(Resource):
         data = request.get_json()
         query = data.get('query', None)
         chroma_client = chromadb.HttpClient(host="43.205.120.186", port=8000)
-        os.environ["OPENAI_API_KEY"] = "key"
+        os.environ["OPENAI_API_KEY"] = "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"
         embeddings = OpenAIEmbeddings()
         db4 = Chroma(
             client=chroma_client,

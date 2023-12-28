@@ -6,4 +6,5 @@ langchain
 openai
 unstructured
 tiktoken
+pysqlite3-binary
 chromadb
