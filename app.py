@@ -2,7 +2,7 @@ from flask import Flask
 from flask_restful import Api
 from flask_cors import CORS
 
-from apis.hi import RetrievalView
+from apis.hi import RetrievalView, TimeoutView
 
 
 app = Flask(__name__)
@@ -11,6 +11,7 @@ api = Api(app)
 CORS(app)
 
 api.add_resource(RetrievalView, '/retrieval')
+api.add_resource(TimeoutView, '/timeout')
 
 
 @app.route('/')
