@@ -5,9 +5,6 @@ from flask_cors import CORS
 from apis.hi import RetrievalView
 
 
-
-
-
 app = Flask(__name__)
 
 api = Api(app)
