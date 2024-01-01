@@ -10,6 +10,8 @@ services:
       - 8081:5000
     env_file:
       - ./.env
+    volumes:
+      - web_app_data:/home/web_app/chat_bot_be/
 
   redis_service:
     image: 'bitnami/redis:latest'
@@ -17,3 +19,9 @@ services:
       - ALLOW_EMPTY_PASSWORD=yes
     ports:
       - 6379:6379
+    volumes:
+      - redis_data:/data
+
+volumes:
+  web_app_data:
+  redis_data:
