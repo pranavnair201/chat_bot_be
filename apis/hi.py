@@ -53,20 +53,20 @@ class RetrievalView(Resource):
             llm=llm,
         )
         system_history_msg = '''
-        The following is a friendly conversation between a Human and an AI. The AI is talkative and provides lots of specific details from its context. If the AI does not know the answer to a question, it truthfully says "I'm sorry, but I'm unable to provide an answer to that question at the moment.". Don't give answer as AI.
+        The following is a friendly conversation between a Human and an AI. The AI is talkative and provides lots of specific details from its context. If the AI does not know the answer to a question, it truthfully says "I'm sorry, but I'm unable to provide an answer to that question at the moment.".
         '''
 
         system_query_msg = '''
         Context: {contexts}
-        When responding, imagine you are a virtual assistant representing Sculptsoft, a . Provide answers to the below query exclusively based on the above context. Ensure that your response is solely derived from the provided contexts, refraining from generating answers independently.
+        When responding, imagine you are a virtual assistant representing Sculptsoft. Provide answers to the below query exclusively based on the above context. Ensure that your response is solely derived from the provided contexts, refraining from generating answers independently.
         '''
 
         human_query_msg = '''
         Query: {query}
         '''
         system_post_msg = '''
-                Answer text should not contain "AI:" or "System:" and answer should be more descriptive. If you don't have answer to the query, kindly state "I'm sorry, but I'm unable to provide an answer to that question at the moment."
-                '''
+        Answer text should not contain "AI:" or "System:" and answer should be more descriptive. If you don't have answer to the query, kindly state "I'm sorry, but I'm unable to provide an answer to that question at the moment."
+        '''
         # chain = load_qa_chain(OpenAI(), chain_type="stuff")
 
         messages = [
@@ -92,9 +92,8 @@ class RetrievalView(Resource):
         )
         langchain.debug = True
         v = chain({"query": query})
-        if (answer := v.get("text", None)) is not None:
-            answer = parser(answer=answer)
-
+        answer = v.get("text", None)
+        # answer = parser(answer=answer)
         logger = get_logger(session_id=session_id)
         logger.info(str({"query": query, "text": answer, "contexts": contexts}))
         return make_response({"status": True, "detail": answer}, 200)
