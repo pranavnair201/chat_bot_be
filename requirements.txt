@@ -9,3 +9,4 @@ unstructured
 tiktoken
 pysqlite3-binary
 db-sqlite3==0.0.1
+redis==5.0.1

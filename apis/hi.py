@@ -2,17 +2,16 @@ from flask_restful import Resource, request
 from flask import make_response
 import langchain
 
+
 from utils.error_handler import error_handler
-import os
+from utils.logger import get_logger
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
-from langchain.schema.document import Document
 import chromadb
-from langchain.chains.question_answering import load_qa_chain
 from langchain.llms import OpenAI
-from langchain.memory import ConversationBufferMemory, FileChatMessageHistory
-from langchain import LLMChain, ConversationChain
-from langchain.prompts import MessagesPlaceholder, HumanMessagePromptTemplate, ChatPromptTemplate
+from langchain.memory import ConversationBufferMemory, RedisChatMessageHistory
+from langchain import LLMChain
+from langchain.prompts import MessagesPlaceholder, HumanMessagePromptTemplate, ChatPromptTemplate, SystemMessagePromptTemplate
 
 
 class RetrievalView(Resource):
@@ -26,7 +25,7 @@ class RetrievalView(Resource):
             return make_response({"status": False, "detail": "session_id is required"}, 400)
 
         chroma_client = chromadb.HttpClient(host="43.205.120.186", port=8000)
-        llm = OpenAI(temperature=0.2)
+        llm = OpenAI(model='gpt-3.5-turbo-instruct', temperature=0.2)
         embeddings = OpenAIEmbeddings()
         db4 = Chroma(
             client=chroma_client,
@@ -39,25 +38,42 @@ class RetrievalView(Resource):
         for res in results:
             contexts += res[0].page_content
 
-        # if loaded_chat_memory := ConversationBufferMemory.load_from_file("chat_history.json") is None:
         loaded_chat_memory = ConversationBufferMemory(
-            chat_memory=FileChatMessageHistory(f"sessions/chat_history_{str(session_id)}.json"),
+            # chat_memory=FileChatMessageHistory(f"sessions/chat_history_{str(session_id)}.json"),
+            chat_memory=RedisChatMessageHistory(
+                session_id=f"chat_history_{str(session_id)}",
+                url="redis://redis_service:6379/0",
+            ),
             memory_key="chat_history",
             return_messages=True,
             llm=llm,
         )
 
+        system_history_msg = '''
+        The following is a friendly conversation between a Human and an AI. The AI is talkative and provides lots of specific details from its context. If the AI does not know the answer to a question, it truthfully says "I'm sorry, but I'm unable to provide an answer to that question at the moment.". Don't give answer as AI.
+        '''
+
+        system_query_msg = '''
+        Context: {contexts}
+        When responding, imagine you are a virtual assistant representing Sculptsoft. Provide answers to the below query exclusively based on the above context. Ensure that your response is solely derived from the provided contexts, refraining from generating answers independently.
+        If you don't have answer to the query, kindly state "I'm sorry, but I'm unable to provide an answer to that question at the moment."
+        '''
+
+        human_query_msg = '''
+        Query: {query}
+        '''
+        system_post_msg = '''
+        Answer text should not contain "AI:" or "System:".
+        '''
         # chain = load_qa_chain(OpenAI(), chain_type="stuff")
         prompt = ChatPromptTemplate(
             input_variables=['query'],
             messages=[
-                MessagesPlaceholder(
-                    variable_name="chat_history"
-                ),
-                HumanMessagePromptTemplate.from_template(
-                    "When responding, imagine you are a virtual assistant representing a specialized app development company. Provide answers exclusively based on the given context. In accordance with the provided {contexts}, please reply to the following {query} as if you were this virtual assistant. Ensure that your response is solely derived from the provided contexts, refraining from generating answers independently. If no answer is found, kindly state 'I'm sorry, but I'm unable to provide an answer to that question at the moment. It could be a topic outside my current knowledge or capabilities. If you have another question or need assistance with something else, feel free to ask, and I'll do my best to help!' Strictly adhere to the given contexts and give answers solely from the provided context.",
-                    partial_variables={"contexts": contexts}
-                ),
+                SystemMessagePromptTemplate.from_template(system_history_msg),
+                MessagesPlaceholder(variable_name="chat_history"),
+                SystemMessagePromptTemplate.from_template(system_query_msg, partial_variables={"contexts": contexts}),
+                HumanMessagePromptTemplate.from_template(human_query_msg),
+                SystemMessagePromptTemplate.from_template(system_post_msg),
             ]
         )
 
@@ -69,7 +85,10 @@ class RetrievalView(Resource):
         )
         langchain.debug = True
         v = chain({"query": query})
-        return make_response({"status": True, "detail": v.get("text", None)}, 200)
+        answer = v.get("text", None)
+        logger = get_logger(session_id=session_id)
+        logger.info(str({"query": query, "text": answer, "contexts": contexts}))
+        return make_response({"status": True, "detail": answer}, 200)
 
 
 class TimeoutView(Resource):
@@ -80,8 +99,10 @@ class TimeoutView(Resource):
         if (session_id := data.get('session_id', None)) is None:
             return make_response({"status": False, "detail": "session_id is required"}, 400)
 
-        file_name = f"sessions/chat_history_{str(session_id)}.json"
-        if os.path.exists(file_name):
-            os.remove(file_name)
+        chat_memory = RedisChatMessageHistory(
+            session_id=f"chat_history_{str(session_id)}",
+            url="redis://redis_service:6379/0"
+        )
+        chat_memory.clear()
 
         return make_response({"status": True, "detail": "Timed out successfully"}, 200)

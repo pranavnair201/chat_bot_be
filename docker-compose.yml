@@ -10,3 +10,10 @@ services:
       - 8081:5000
     env_file:
       - ./.env
+
+  redis_service:
+    image: 'bitnami/redis:latest'
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    ports:
+      - 6379:6379
