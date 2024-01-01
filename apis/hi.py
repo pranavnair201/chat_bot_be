@@ -53,30 +53,32 @@ class RetrievalView(Resource):
             llm=llm,
         )
         system_history_msg = '''
-                The following is a friendly conversation between a Human and an AI. The AI is talkative and provides lots of specific details from its context. If the AI does not know the answer to a question, it truthfully says "I'm sorry, but I'm unable to provide an answer to that question at the moment.". Don't give answer as AI.
-                '''
+        The following is a friendly conversation between a Human and an AI. The AI is talkative and provides lots of specific details from its context. If the AI does not know the answer to a question, it truthfully says "I'm sorry, but I'm unable to provide an answer to that question at the moment.". Don't give answer as AI.
+        '''
 
         system_query_msg = '''
-                Context: {contexts}
-                When responding, imagine you are a virtual assistant representing Sculptsoft, a . Provide answers to the below query exclusively based on the above context. Ensure that your response is solely derived from the provided contexts, refraining from generating answers independently.
-                '''
+        Context: {contexts}
+        When responding, imagine you are a virtual assistant representing Sculptsoft, a . Provide answers to the below query exclusively based on the above context. Ensure that your response is solely derived from the provided contexts, refraining from generating answers independently.
+        '''
 
         human_query_msg = '''
-                Query: {query}
-                '''
+        Query: {query}
+        '''
         system_post_msg = '''
                 Answer text should not contain "AI:" or "System:" and answer should be more descriptive. If you don't have answer to the query, kindly state "I'm sorry, but I'm unable to provide an answer to that question at the moment."
                 '''
         # chain = load_qa_chain(OpenAI(), chain_type="stuff")
 
         messages = [
+            SystemMessagePromptTemplate.from_template(system_history_msg),
+            CustomMessagesPlaceholder(variable_name="chat_history"),
             SystemMessagePromptTemplate.from_template(system_query_msg, partial_variables={"contexts": contexts}),
             HumanMessagePromptTemplate.from_template(human_query_msg),
             SystemMessagePromptTemplate.from_template(system_post_msg)
         ]
-        if len(memory.messages) > 0:
-            messages.insert(0, CustomMessagesPlaceholder(variable_name="chat_history"))
-            messages.insert(0, SystemMessagePromptTemplate.from_template(system_history_msg))
+        # if len(memory.messages) > 0:
+        #     messages.insert(0, )
+        #     messages.insert(0, )
         prompt = ChatPromptTemplate(
             input_variables=['query'],
             messages=messages
