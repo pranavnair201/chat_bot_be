@@ -41,11 +41,11 @@ class RetrievalView(Resource):
         for res in results:
             contexts += res[0].page_content
 
-        # memory = FileChatMessageHistory(f"sessions/chat_history_{str(session_id)}.json")
-        memory = RedisChatMessageHistory(
-            session_id=f"chat_history_{str(session_id)}",
-            url="redis://redis_service:6379/0",
-        )
+        memory = FileChatMessageHistory(f"sessions/chat_history_{str(session_id)}.json")
+        # memory = RedisChatMessageHistory(
+        #     session_id=f"chat_history_{str(session_id)}",
+        #     url="redis://redis_service:6379/0",
+        # )
         loaded_chat_memory = ConversationBufferMemory(
             chat_memory=memory,
             memory_key="chat_history",
@@ -53,7 +53,7 @@ class RetrievalView(Resource):
             llm=llm,
         )
         system_history_msg = '''
-        The following is a friendly conversation between a Human and an AI. The AI is talkative and provides lots of specific details from its context. If the AI does not know the answer to a question, it truthfully says "I'm sorry, but I'm unable to provide an answer to that question at the moment.".
+        The following is a friendly conversation between a Human and an AI. The AI is talkative and provides lots of specific details from its context.
         '''
 
         system_query_msg = '''
@@ -65,7 +65,8 @@ class RetrievalView(Resource):
         Query: {query}
         '''
         system_post_msg = '''
-        Answer text should not contain "AI:" or "System:" and answer should be more descriptive. If you don't have answer to the query, kindly state "I'm sorry, but I'm unable to provide an answer to that question at the moment."
+         If the AI does not know the answer to a question, it truthfully says "I'm sorry, but I'm unable to provide an answer to that question at the moment."
+        Answer text should not contain "AI:" or "System:" and answer should be more descriptive. 
         '''
         # chain = load_qa_chain(OpenAI(), chain_type="stuff")
 
