@@ -6,6 +6,8 @@ def parser(answer):
     results = link_pattern.findall(answer)
 
     for result in results:
+        if result[-1] in ['.']:
+            result = result[:-1]
         answer = answer.replace(f" {result}", f' [Link]({result})')
 
     return answer

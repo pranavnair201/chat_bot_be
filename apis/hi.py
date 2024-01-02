@@ -2,6 +2,7 @@ from flask_restful import Resource, request
 from flask import make_response
 import langchain
 
+from utils.markdown import parser
 from utils.error_handler import error_handler
 from utils.logger import get_logger
 from langchain.embeddings.openai import OpenAIEmbeddings
@@ -55,7 +56,7 @@ class RetrievalView(Resource):
 
         system_query_msg = '''
         Context: {contexts}
-        When responding, imagine you are a virtual assistant representing Sculptsoft. Provide answers to the below query exclusively based on the above context. Ensure that your response is solely derived from the provided contexts, refraining from generating answers independently.
+        Provide answers to the below query exclusively based on the above context. Ensure that your response is solely derived from the provided contexts, refraining from generating answers independently.
         '''
 
         human_query_msg = '''
@@ -63,7 +64,7 @@ class RetrievalView(Resource):
         '''
         system_post_msg = '''
          If the AI does not know the answer to a question, it truthfully says "I'm sorry, but I'm unable to provide an answer to that question at the moment."
-        Answer text should not contain "AI:" or "System:" and answer should be more descriptive. 
+        Answer text should not contain "AI:" or "System:" and answer should be more descriptive. When responding, imagine you are a virtual assistant representing Sculptsoft.
         '''
         # chain = load_qa_chain(OpenAI(), chain_type="stuff")
 
