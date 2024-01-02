@@ -69,8 +69,8 @@ class RetrievalView(Resource):
         # chain = load_qa_chain(OpenAI(), chain_type="stuff")
 
         messages = [
-            SystemMessagePromptTemplate.from_template(system_history_msg),
-            MessagesPlaceholder(variable_name="chat_history"),
+            # SystemMessagePromptTemplate.from_template(system_history_msg),
+            # MessagesPlaceholder(variable_name="chat_history"),
             SystemMessagePromptTemplate.from_template(system_query_msg, partial_variables={"contexts": contexts}),
             HumanMessagePromptTemplate.from_template(human_query_msg),
             SystemMessagePromptTemplate.from_template(system_post_msg)
