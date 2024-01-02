@@ -1,13 +1,9 @@
 from flask_restful import Resource, request
 from flask import make_response
 import langchain
-from utils.markdown import parser
 
-import re
 from utils.error_handler import error_handler
 from utils.logger import get_logger
-from utils.markdown import parser
-from utils.custom_message_placeholder import CustomMessagesPlaceholder
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
 import chromadb
@@ -41,7 +37,7 @@ class RetrievalView(Resource):
         for res in results:
             contexts += res[0].page_content
 
-        # memory = FileChatMessageHistory(f"sessions/chat_history_{str(session_id)}.json")
+        # memory = FileChatMessageHistory(f"./sessions/chat_history_{str(session_id)}.json")
         memory = RedisChatMessageHistory(
             session_id=f"chat_history_{str(session_id)}",
             url="redis://redis_service:6379/0",
