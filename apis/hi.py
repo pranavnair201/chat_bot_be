@@ -12,7 +12,7 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
 import chromadb
 from langchain.llms import OpenAI
-from langchain.memory import ConversationBufferMemory, RedisChatMessageHistory, FileChatMessageHistory
+from langchain.memory import ConversationBufferWindowMemory, RedisChatMessageHistory, FileChatMessageHistory
 from langchain import LLMChain
 from langchain.prompts import MessagesPlaceholder, HumanMessagePromptTemplate, ChatPromptTemplate, SystemMessagePromptTemplate
 
@@ -46,11 +46,12 @@ class RetrievalView(Resource):
             session_id=f"chat_history_{str(session_id)}",
             url="redis://redis_service:6379/0",
         )
-        loaded_chat_memory = ConversationBufferMemory(
+        loaded_chat_memory = ConversationBufferWindowMemory(
             chat_memory=memory,
             memory_key="chat_history",
             return_messages=True,
             llm=llm,
+            k=2
         )
         system_history_msg = '''
         The following is a friendly conversation between a Human and an AI. The AI is talkative and provides lots of specific details from its context.
@@ -72,7 +73,7 @@ class RetrievalView(Resource):
 
         messages = [
             SystemMessagePromptTemplate.from_template(system_history_msg),
-            CustomMessagesPlaceholder(variable_name="chat_history"),
+            MessagesPlaceholder(variable_name="chat_history"),
             SystemMessagePromptTemplate.from_template(system_query_msg, partial_variables={"contexts": contexts}),
             HumanMessagePromptTemplate.from_template(human_query_msg),
             SystemMessagePromptTemplate.from_template(system_post_msg)

@@ -11,7 +11,7 @@ services:
     env_file:
       - ./.env
     volumes:
-      - web_app_data:/home/web_app/chat_bot_be/
+      - logs_data:/app/session_logs
 
   redis_service:
     image: 'bitnami/redis:latest'
@@ -23,5 +23,5 @@ services:
       - redis_data:/data
 
 volumes:
-  web_app_data:
+  logs_data:
   redis_data:
