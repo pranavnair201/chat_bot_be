@@ -39,11 +39,11 @@ class RetrievalView(Resource):
         for res in results:
             contexts += res[0].page_content
 
-        memory = FileChatMessageHistory(f"./sessions/chat_history_{str(session_id)}.json")
-        # memory = RedisChatMessageHistory(
-        #     session_id=f"chat_history_{str(session_id)}",
-        #     url="redis://redis_service:6379/0",
-        # )
+        # memory = FileChatMessageHistory(f"./sessions/chat_history_{str(session_id)}.json")
+        memory = RedisChatMessageHistory(
+            session_id=f"chat_history_{str(session_id)}",
+            url="redis://redis_service:6379/0",
+        )
         loaded_chat_memory = ConversationBufferWindowMemory(
             chat_memory=memory,
             memory_key="chat_history",
