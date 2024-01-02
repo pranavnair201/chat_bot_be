@@ -1,8 +1,9 @@
 from flask_restful import Resource, request
 from flask import make_response
 import langchain
+from utils.answer_parser import ans_parser
+from utils.custom_message_placeholder import CustomMessagesPlaceholder
 
-from utils.markdown import parser
 from utils.error_handler import error_handler
 from utils.logger import get_logger
 from langchain.embeddings.openai import OpenAIEmbeddings
@@ -38,11 +39,11 @@ class RetrievalView(Resource):
         for res in results:
             contexts += res[0].page_content
 
-        # memory = FileChatMessageHistory(f"./sessions/chat_history_{str(session_id)}.json")
-        memory = RedisChatMessageHistory(
-            session_id=f"chat_history_{str(session_id)}",
-            url="redis://redis_service:6379/0",
-        )
+        memory = FileChatMessageHistory(f"./sessions/chat_history_{str(session_id)}.json")
+        # memory = RedisChatMessageHistory(
+        #     session_id=f"chat_history_{str(session_id)}",
+        #     url="redis://redis_service:6379/0",
+        # )
         loaded_chat_memory = ConversationBufferWindowMemory(
             chat_memory=memory,
             memory_key="chat_history",
@@ -51,26 +52,26 @@ class RetrievalView(Resource):
             k=2
         )
         system_history_msg = '''
-        The following is a friendly conversation between a Human and an AI. The AI is talkative and provides lots of specific details from its context.
-        '''
+                The following is a friendly conversation between a Human and an AI. The AI is talkative and provides lots of specific details from its context.
+                '''
 
         system_query_msg = '''
-        Context: {contexts}
-        Provide answers to the below query exclusively based on the above context. Ensure that your response is solely derived from the provided contexts, refraining from generating answers independently.
-        '''
+                Context: {contexts}
+                When responding, imagine you are a virtual assistant representing Sculptsoft. Provide answers to the below query exclusively based on the above context. Ensure that your response is solely derived from the provided contexts, refraining from generating answers independently.
+                '''
 
         human_query_msg = '''
-        Query: {query}
-        '''
+                Query: {query}
+                '''
         system_post_msg = '''
-         If the AI does not know the answer to a question, it truthfully says "I'm sorry, but I'm unable to provide an answer to that question at the moment."
-        Answer text should not contain "AI:" or "System:" and answer should be more descriptive. When responding, imagine you are a virtual assistant representing Sculptsoft.
-        '''
+                 If the AI does not know the answer to a question, it truthfully says "I'm sorry, but I'm unable to provide an answer to that question at the moment."
+                Answer text should not contain "AI:" or "System:" and answer should be more descriptive. 
+                '''
         # chain = load_qa_chain(OpenAI(), chain_type="stuff")
 
         messages = [
-            # SystemMessagePromptTemplate.from_template(system_history_msg),
-            # MessagesPlaceholder(variable_name="chat_history"),
+            SystemMessagePromptTemplate.from_template(system_history_msg),
+            CustomMessagesPlaceholder(variable_name="chat_history"),
             SystemMessagePromptTemplate.from_template(system_query_msg, partial_variables={"contexts": contexts}),
             HumanMessagePromptTemplate.from_template(human_query_msg),
             SystemMessagePromptTemplate.from_template(system_post_msg)
@@ -93,6 +94,7 @@ class RetrievalView(Resource):
         v = chain({"query": query})
         answer = v.get("text", None)
         # answer = parser(answer=answer)
+        # answer = ans_parser(answer=answer)
         logger = get_logger(session_id=session_id)
         logger.info(str({"query": query, "text": answer, "contexts": contexts}))
         return make_response({"status": True, "detail": answer}, 200)
